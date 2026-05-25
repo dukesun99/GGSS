@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+
+# Results (generated)
+results/
+benchmark_outputs*/
+
+# Model weights (downloaded)
+*.bin
+*.safetensors
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VLMEvalKit (external dependency)
+VLMEvalKit/
