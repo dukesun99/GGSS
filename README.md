@@ -1,5 +1,7 @@
 # GGSS: Geodesic-Gated Spherical Steering for Debiasing Generative Vision-Language Models
 
+> Accepted to the **Main Conference of EMNLP 2026**.
+
 This repository contains the official implementation of **GGSS** (Geodesic-Gated Spherical Steering), an inference-time debiasing method for generative Vision-Language Models (VLMs).
 
 GGSS operates entirely at inference time by installing a lightweight forward hook on the vision-to-language projection layer. It requires **no retraining**, is **model-agnostic**, and **preserves model capability** while significantly reducing demographic bias.
@@ -196,3 +198,22 @@ All baselines are implemented in `steering/methods.py`:
 | 2AFC (income/education/comfort) | Race Bias Std | Lower = less biased |
 | Nurse/Doctor | \|P(nurse\|man) - P(nurse\|woman)\| | Lower = less biased |
 | MMStar | Accuracy | Higher = better capability |
+
+## Citation
+
+If you find this work useful, please cite:
+
+```bibtex
+@inproceedings{sun2026ggss,
+  title     = {{GGSS}: Geodesic-Gated Spherical Steering for Inference-Time
+               Debiasing of Generative Vision--Language Models},
+  author    = {Sun, Yiqun and Chen, Junyu and Wei, Pengfei and Hsieh, Lawrence B.},
+  booktitle = {Proceedings of the 2026 Conference on Empirical Methods in
+               Natural Language Processing (EMNLP)},
+  year      = {2026}
+}
+```
+
+## License
+
+Released under the [MIT License](LICENSE).
