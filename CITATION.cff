@@ -1,0 +1,52 @@
+cff-version: 1.2.0
+message: "If you use this software or the GGSS method, please cite the paper below."
+title: "GGSS: Geodesic-Gated Spherical Steering for Inference-Time Debiasing of Generative Vision-Language Models"
+abstract: >-
+  Official implementation of GGSS, an inference-time debiasing method for generative
+  vision-language models. GGSS discovers a counterfactual demographic bias subspace on the unit
+  hypersphere and steers visual token activations along geodesic arcs with an adaptive per-token
+  gate, preserving activation norms and requiring no retraining of the underlying model.
+type: software
+license: MIT
+repository-code: "https://github.com/dukesun99/GGSS"
+url: "https://arxiv.org/abs/2608.25375"
+keywords:
+  - vision-language models
+  - multimodal large language models
+  - demographic bias
+  - inference-time debiasing
+  - activation steering
+  - representation engineering
+  - fairness
+authors:
+  - family-names: Sun
+    given-names: Yiqun
+    affiliation: "Magellan Technology Research Institute (MTRI)"
+  - family-names: Chen
+    given-names: Junyu
+    affiliation: "National University of Singapore"
+  - family-names: Wei
+    given-names: Pengfei
+    affiliation: "Magellan Technology Research Institute (MTRI)"
+  - family-names: Hsieh
+    given-names: Lawrence B.
+    affiliation: "Magellan Technology Research Institute (MTRI)"
+preferred-citation:
+  type: conference-paper
+  title: "GGSS: Geodesic-Gated Spherical Steering for Inference-Time Debiasing of Generative Vision-Language Models"
+  year: 2026
+  collection-title: "Proceedings of the 2026 Conference on Empirical Methods in Natural Language Processing (EMNLP)"
+  url: "https://arxiv.org/abs/2608.25375"
+  authors:
+    - family-names: Sun
+      given-names: Yiqun
+      affiliation: "Magellan Technology Research Institute (MTRI)"
+    - family-names: Chen
+      given-names: Junyu
+      affiliation: "National University of Singapore"
+    - family-names: Wei
+      given-names: Pengfei
+      affiliation: "Magellan Technology Research Institute (MTRI)"
+    - family-names: Hsieh
+      given-names: Lawrence B.
+      affiliation: "Magellan Technology Research Institute (MTRI)"

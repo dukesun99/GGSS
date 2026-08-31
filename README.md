@@ -1,10 +1,82 @@
-# GGSS: Geodesic-Gated Spherical Steering for Debiasing Generative Vision-Language Models
+# GGSS: Geodesic-Gated Spherical Steering for Inference-Time Debiasing of Generative Vision-Language Models
+
+[![Paper](https://img.shields.io/badge/arXiv-2608.25375-b31b1b.svg)](https://arxiv.org/abs/2608.25375)
+[![Venue](https://img.shields.io/badge/EMNLP%202026-Main%20Conference-4b8bbe.svg)](https://2026.emnlp.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+Official implementation of **GGSS** (Geodesic-Gated Spherical Steering), an inference-time
+debiasing method for generative vision-language models. GGSS reduces demographic bias in a
+**frozen** VLM by installing a lightweight forward hook on the vision-to-language projection
+layer: it discovers a counterfactual bias subspace on the unit hypersphere and rotates visual
+token activations along geodesic arcs, with an adaptive per-token gate that concentrates the
+correction on tokens carrying demographic signal. Because the rotation is norm-preserving and
+token-selective, it avoids the capability damage that hard subspace projection causes on
+multimodal large language models (MLLMs).
+
+**No retraining. No weight updates. Model-agnostic.** The same hook works across the large
+vision-language models (LVLMs) evaluated in the paper and 15+ architectures supported by the
+hook infrastructure.
+
+<p align="center">
+  <img src="assets/teaser.png" width="440"
+       alt="Three-panel comparison: an unmodified VLM produces demographically uneven answer distributions; training-based debiasing flattens them but needs training data and GPUs; GGSS inserts an inference-time debiasing hook into the frozen model and flattens the distribution efficiently.">
+</p>
 
 > Accepted to the **Main Conference of EMNLP 2026**.
 
-This repository contains the official implementation of **GGSS** (Geodesic-Gated Spherical Steering), an inference-time debiasing method for generative Vision-Language Models (VLMs).
+## Results
 
-GGSS operates entirely at inference time by installing a lightweight forward hook on the vision-to-language projection layer. It requires **no retraining**, is **model-agnostic**, and **preserves model capability** while significantly reducing demographic bias.
+GGSS attains the lowest average bias on all four evaluated backbones while leaving general
+visual-language capability intact. Avg Δ% is the mean relative bias change across the
+categorical (MCQ), pairwise (2AFC), and occupation-gender (N/D) tests at each method's
+best-avg-α operating point; MMStar is measured at that same operating point.
+
+| Backbone | Avg Δ% bias ↓ | MMStar, unsteered → GGSS (p.p. change) |
+|---|---:|---:|
+| Pixtral-12B          | −55% | 53.6 → 53.2 (−0.4) |
+| LLaVA-1.6-Vicuna-7B  | −90% | 37.3 → 37.8 (+0.5) |
+| LLaVA-1.6-Mistral-7B | −80% | 38.5 → 38.9 (+0.4) |
+| Qwen3-VL-4B          | −60% | 61.5 → 61.6 (+0.1) |
+
+Per-task reductions reach 96% (N/D), 84% (MCQ), and 61% (2AFC). Reductions are statistically
+significant on three of four backbones under paired sign-flip permutation tests, and every
+MMStar change is statistically indistinguishable from the unsteered model. MMStar figures above
+are for race-task steering; gender-task steering is reported in the paper.
+
+## Method Overview
+
+<p align="center">
+  <img src="assets/method.png" width="860"
+       alt="GGSS pipeline: offline stage collects activations from counterfactual image sets, computes per-group Frechet means on the hypersphere, and extracts a bias subspace by SVD of tangent-space shifts; online stage log-maps each visual token, projects out the bias component, applies an adaptive gate, and Slerps back to a norm-preserving debiased activation.">
+</p>
+
+GGSS is a two-stage pipeline:
+
+### Stage 1: Offline Counterfactual Bias Subspace Discovery
+
+1. Collect activations from the vision-to-language projection layer using counterfactual image sets
+2. Compute per-group Fréchet means on the unit hypersphere (Karcher iteration)
+3. Apply Log-map to obtain tangent vectors, then SVD to extract the bias subspace V_bias
+4. Calibrate the adaptive gate using the distribution of per-token bias magnitudes
+
+### Stage 2: Online Token-Level Geodesic Steering
+
+For each token activation at inference time:
+1. Normalize to unit sphere, compute tangent vector via Log-map
+2. Project onto the bias subspace to identify the biased component
+3. Compute debiased target via Exp-map of the cleaned tangent vector
+4. Apply adaptive gate (sigmoid of normalized bias strength) to determine steering intensity
+5. Interpolate via Slerp (spherical linear interpolation) to preserve norm
+6. Restore original activation magnitude
+
+### Key Hyperparameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `alpha`   | 0.25–1.5 | Steering strength (swept per experiment) |
+| `kappa`   | 5       | Gate sharpness |
+| `g_floor` | 0.3     | Minimum gate value |
+| `k`       | K-1 (auto) | Bias subspace dimensionality |
 
 ## Repository Structure
 
@@ -137,36 +209,6 @@ python run_benchmarks.py --preset qwen3vl --benchmarks MMStar
 python run_ablation_study.py
 ```
 
-## Method Overview
-
-GGSS is a two-stage pipeline:
-
-### Stage 1: Offline Counterfactual Bias Subspace Discovery
-
-1. Collect activations from the vision-to-language projection layer using counterfactual image sets
-2. Compute per-group Fréchet means on the unit hypersphere (Karcher iteration)
-3. Apply Log-map to obtain tangent vectors, then SVD to extract the bias subspace V_bias
-4. Calibrate the adaptive gate using the distribution of per-token bias magnitudes
-
-### Stage 2: Online Token-Level Geodesic Steering
-
-For each token activation at inference time:
-1. Normalize to unit sphere, compute tangent vector via Log-map
-2. Project onto the bias subspace to identify the biased component
-3. Compute debiased target via Exp-map of the cleaned tangent vector
-4. Apply adaptive gate (sigmoid of normalized bias strength) to determine steering intensity
-5. Interpolate via Slerp (spherical linear interpolation) to preserve norm
-6. Restore original activation magnitude
-
-### Key Hyperparameters
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `alpha`   | 0.25–1.5 | Steering strength (swept per experiment) |
-| `kappa`   | 5       | Gate sharpness |
-| `g_floor` | 0.3     | Minimum gate value |
-| `k`       | K-1 (auto) | Bias subspace dimensionality |
-
 ## Supported Models
 
 | Model | Preset | HuggingFace Path |
@@ -199,6 +241,17 @@ All baselines are implemented in `steering/methods.py`:
 | Nurse/Doctor | \|P(nurse\|man) - P(nurse\|woman)\| | Lower = less biased |
 | MMStar | Accuracy | Higher = better capability |
 
+## Intended Use and Limitations
+
+GGSS is a research artifact for measuring and reducing demographic bias in VLM outputs. Lower
+benchmark bias is not the same as fairness: steering does not remove biased knowledge from model
+parameters, and it is not validated under distribution shift. At high steering strength the
+intervention shades from debiasing into attribute removal, which can suppress demographic
+information that a task legitimately needs. Choose an operating point from the trade-off curves
+reported in the paper, and audit both bias and attribute retention on your own task before
+deploying. See the Limitations and Ethics Statement sections of the paper for the full
+discussion.
+
 ## Citation
 
 If you find this work useful, please cite:
@@ -210,7 +263,10 @@ If you find this work useful, please cite:
   author    = {Sun, Yiqun and Chen, Junyu and Wei, Pengfei and Hsieh, Lawrence B.},
   booktitle = {Proceedings of the 2026 Conference on Empirical Methods in
                Natural Language Processing (EMNLP)},
-  year      = {2026}
+  year      = {2026},
+  eprint    = {2608.25375},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CY}
 }
 ```
 
