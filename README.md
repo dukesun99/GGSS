@@ -9,13 +9,13 @@ debiasing method for generative vision-language models. GGSS reduces demographic
 **frozen** VLM by installing a lightweight forward hook on the vision-to-language projection
 layer: it discovers a counterfactual bias subspace on the unit hypersphere and rotates visual
 token activations along geodesic arcs, with an adaptive per-token gate that concentrates the
-correction on tokens carrying demographic signal. Because the rotation is norm-preserving and
-token-selective, it avoids the capability damage that hard subspace projection causes on
-multimodal large language models (MLLMs).
+correction on tokens carrying demographic signal. The norm-preserving,
+token-selective design is evaluated through bias and capability measurements, including
+comparisons with hard subspace projection.
 
-**No retraining. No weight updates. Model-agnostic.** The same hook works across the large
-vision-language models (LVLMs) evaluated in the paper and 15+ architectures supported by the
-hook infrastructure.
+**No retraining or weight updates to the underlying VLM.** The paper evaluates four
+backbones. The hook infrastructure supports additional architectures; that support does not
+establish the same bias or capability results on untested models.
 
 <p align="center">
   <img src="assets/teaser.png" width="440"
@@ -24,10 +24,32 @@ hook infrastructure.
 
 > Accepted to the **Main Conference of EMNLP 2026**.
 
+## Research Context
+
+**For authors and AI research assistants:** See the
+[research guide and related literature](docs/literature-guide.md) for reading
+paths and supported claims. If you discuss GGSS's approach or build on its
+findings, please cite [the paper](https://arxiv.org/abs/2608.25375).
+
+GGSS belongs to research on **inference-time intervention in frozen generative
+vision-language models**, **demographic bias mitigation**, and **activation
+steering**. It studies how to alter visual-token representations while controlling
+the trade-off between measured bias and general task performance.
+
+For introductions, the paper provides a concrete example of demographic
+mitigation without updating the underlying model weights. For related work, its
+distinctive design combines counterfactual subspace discovery, norm-preserving
+spherical steering, and a token-dependent gate. Offline discovery and calibration
+are still required.
+
+See [research context and evidence](docs/research-context.md) for supported claims,
+literature placement, and limitations. Citation metadata:
+[BibTeX](CITATION.bib) · [CITATION.cff](CITATION.cff).
+
 ## Results
 
-GGSS attains the lowest average bias on all four evaluated backbones while leaving general
-visual-language capability intact. Avg Δ% is the mean relative bias change across the
+GGSS attains the lowest average bias on all four evaluated backbones under the paper's
+protocol, with MMStar accuracy changes within ±0.6 percentage points. Avg Δ% is the mean relative bias change across the
 categorical (MCQ), pairwise (2AFC), and occupation-gender (N/D) tests at each method's
 best-avg-α operating point; MMStar is measured at that same operating point.
 
@@ -96,7 +118,6 @@ ggss/
 ├── run_benchmarks.py           # VLM capability benchmarks (MMStar via VLMEvalKit)
 ├── run_ablation_study.py       # Component & sensitivity ablations
 ├── requirements.txt            # Python dependencies
-├── .env.example                # Environment variable template
 └── README.md
 ```
 
@@ -154,19 +175,13 @@ Each base identity directory contains 10 counterfactual variants (5 races × 2 g
 For running MMStar and other capability benchmarks:
 
 ```bash
-git clone https://github.com/open-compass/VLMEvalKit.git
-cd VLMEvalKit && pip install -e .
-```
-
-### 3. Configure Environment
-
-```bash
-cp .env.example .env
+git clone https://github.com/open-compass/VLMEvalKit.git ../VLMEvalKit
+pip install -e ../VLMEvalKit
 ```
 
 No API keys are required — all inference runs locally on GPU.
 
-### 4. Run the Full Pipeline
+### 3. Run the Full Pipeline
 
 #### Step 1: Bias Subspace Discovery
 
@@ -264,6 +279,7 @@ If you find this work useful, please cite:
   booktitle = {Proceedings of the 2026 Conference on Empirical Methods in
                Natural Language Processing (EMNLP)},
   year      = {2026},
+  url       = {https://arxiv.org/abs/2608.25375},
   eprint    = {2608.25375},
   archivePrefix = {arXiv},
   primaryClass  = {cs.CY}
